@@ -14,18 +14,20 @@ app = Flask(__name__)
 
 @app.route("/slack/test", methods=["POST"])
 def command():
+  data = request.form
+
   # # send channel a response
   # channelMsg = slack_client.api_call(
   #   "chat.postMessage",
   #   channel="#foo",
   #   text="Tested!")
 
-  return make_response("", 200)
+  return make_response(data.get('challenge'), 200)
 
 @app.route('/')
 def index():
     return "<h1>Welcome!</h1>"
 
 if __name__ == "__main__":
-    #app.debug = True
+    app.debug = True
     app.run(threaded=True, port=5000)
