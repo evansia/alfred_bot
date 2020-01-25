@@ -1,7 +1,6 @@
 from slackclient import SlackClient
 from flask import Flask, request, make_response, Response
 import os
-from gevent.pywsgi import WSGIServer
 
 slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
 
@@ -42,5 +41,5 @@ def index():
     return "<h1>Welcome!</h1>"
 
 if __name__ == "__main__":
-    app.debug = True
-    app.run()
+    #app.debug = True
+    app.run(threaded=True, port=5000)
