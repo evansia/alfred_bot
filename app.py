@@ -22,11 +22,12 @@ def command():
     response = data.get('challenge')
   elif 'event' in data:
     if data['event']['type'] == "app_mention":
-      # send channel a response
-      channelMsg = slack_client.api_call(
-                      "chat.postMessage",
-                      channel="#foo",
-                      text=data['event']['text'])
+      pass
+      # # send channel a response
+      # channelMsg = slack_client.api_call(
+      #                 "chat.postMessage",
+      #                 channel="#foo",
+      #                 text=data['event']['text'])
 
   return make_response(response, 200)
 
