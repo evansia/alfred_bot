@@ -12,18 +12,23 @@ slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
 
 app = Flask(__name__)
 
-@app.route("/slack/test", methods=["POST"])
+@app.route("/slack", methods=["POST"])
 def command():
   data = request.get_json()
   print(data)
 
-  # # send channel a response
-  # channelMsg = slack_client.api_call(
-  #   "chat.postMessage",
-  #   channel="#foo",
-  #   text="Tested!")
+  response = ""
+  if 'challenge' in data:
+    response = data.get('challenge')
+  elif 'event' in data:
+    if data['event']['type'] == "app_mention":
+      # send channel a response
+      channelMsg = slack_client.api_call(
+                      "chat.postMessage",
+                      channel="#foo",
+                      text=data['event']['text'])
 
-  return make_response(data.get('challenge'), 200)
+  return make_response(response, 200)
 
 @app.route('/')
 def index():
