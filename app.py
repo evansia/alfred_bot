@@ -22,9 +22,10 @@ def get_previous_oncall():
   return rota['previous']['name']
 
 def update_oncall(name):
+  curr = get_current_oncall()
   if not db.update(name, {'is_on_call': 1}):
     return False
-  return db.update(get_current_oncall(), {'is_on_call': 0})
+  return db.update(curr, {'is_on_call': 0})
 
 def get_new_oncall_person_name(raw_text):
   """
