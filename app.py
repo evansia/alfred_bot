@@ -93,7 +93,6 @@ def check_oncall_schedule():
   today = date.today()
   last_oncall_date = get_last_oncall_date()
   diff_in_weeks = (today - last_oncall_date).days//7
-  print("Today is {}; Last oncall date is {}; Diff in weeks is {}".format(today, last_oncall_date, diff_in_weeks))
   if diff_in_weeks == 0:
     return
   is_oncall_week = get_oncall_status()
@@ -102,10 +101,8 @@ def check_oncall_schedule():
     update_oncall_status(1)
     curr_oncall = refresh_oncall_rota()
     post_to_slack("Hello! {} is OnCall this week.".format(curr_oncall))
-    print("1) Updating...")
   elif is_oncall_week and (diff_in_weeks < ONCALL_WEEK):
     update_oncall_status(0)
-    print("2) Updating...")
 
 def handle_event(type, text):
   if not type == "app_mention":
