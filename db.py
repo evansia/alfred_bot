@@ -4,30 +4,39 @@ class DB:
     def __init__(self):
         self.db = TinyDB('data/db.json')
 
-    def insert(self, values):
-        self.db.insert(values)
+    def fetch_data(self, field, key):
+        return self.fetch('data', field, key)
 
-    def fetch_all(self):
-        return self.db.all()
+    def fetch_metadata(self, field, key):
+        return self.fetch('metadata', field, key)
 
-    def fetch_on_call_rota(self):
-        res = {}
-        rec = self.db.all()
-        rec = sorted(rec, key=lambda  k: k['order'])
-        for idx, r in enumerate(rec):
-            if r['is_on_call'] == 1:
-                res['current'] = r
-                res['previous'] = rec[idx-1] if idx > 0 else rec[-1]
-                res['next'] = rec[idx+1] if idx < len(rec) - 1 else rec[0]
-                break
-        return res
+    def fetch(self, table, field, key):
+        tbl = self.db.table(table)
+        return tbl.search(where(field) == key)
 
-    def update(self, key, values):
-        rec = self.db.search(where('name') == key)
+    def fetch_all_data(self):
+        return self.fetch_all('data')
+
+    def fetch_all_metadata(self):
+        return self.fetch_all('metadata')
+
+    def fetch_all(self, table):
+        tbl = self.db.table(table)
+        return tbl.all()
+
+    def update_data(self, field, key, value):
+        return self.update('data', field, key, value)
+
+    def update_metadata(self, field, key, value):
+        return self.update('metadata', field, key, value)
+
+    def update(self, table, field, key, value):
+        tbl = self.db.table(table)
+        rec = tbl.search(where(field) == key)
         if not rec:
             return False
-        rec[0].update(values)
-        self.db.write_back(rec)
+        rec[0].update(value)
+        tbl.write_back(rec)
         return True
 
 
