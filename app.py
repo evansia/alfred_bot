@@ -148,7 +148,7 @@ def worker():
 
 if __name__ == "__main__":
   thread = threading.Thread(target=worker, args=())
-  thread.daemon = True
+  #thread.daemon = True
   thread.start()
   app.debug = True
   app.run(threaded=True, port=5000)
