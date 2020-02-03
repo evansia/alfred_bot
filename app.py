@@ -146,9 +146,17 @@ def worker():
     check_oncall_schedule()
     time.sleep(20) #3600
 
+def init():
+  thread = threading.Thread(target=worker, args=())
+  thread.daemon = True
+  thread.start()
+  app.debug = True
+  app.run(threaded=True, port=5000)
+  return app
+
 if __name__ == "__main__":
   thread = threading.Thread(target=worker, args=())
-  #thread.daemon = True
+  thread.daemon = True
   thread.start()
   app.debug = True
   app.run(threaded=True, port=5000)
