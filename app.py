@@ -93,6 +93,7 @@ def check_oncall_schedule():
   today = date.today()
   last_oncall_date = get_last_oncall_date()
   diff_in_weeks = (today - last_oncall_date).days//7
+  print("{}, {}, {}".format(today, last_oncall_date, diff_in_weeks))
   if diff_in_weeks == 0:
     return
   is_oncall_week = get_oncall_status()
@@ -140,9 +141,10 @@ def index():
   return ""
 
 def worker():
+  print("Worker thread started.")
   while True:
     check_oncall_schedule()
-    time.sleep(3600) # 3600
+    time.sleep(20) #3600
 
 if __name__ == "__main__":
   thread = threading.Thread(target=worker, args=())
