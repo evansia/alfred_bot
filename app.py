@@ -144,7 +144,7 @@ def worker():
   print("Worker thread started.")
   while True:
     check_oncall_schedule()
-    time.sleep(20) #3600
+    time.sleep(3600)
 
 def init():
   thread = threading.Thread(target=worker, args=())
