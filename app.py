@@ -106,6 +106,7 @@ def is_oncall_week():
   elif diff_in_weeks == 1:
     update_oncall_status(0)
     update_last_oncall_person()
+    update_current_oncall_person("")
     return False
   elif diff_in_weeks == ONCALL_WEEK:
     update_last_oncall_date(today)
