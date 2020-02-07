@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 SLACK_BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
 SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL', '#foo')
-ONCALL_WEEK = 3 # TODO probs can change this to an env var
+ONCALL_WEEK = os.environ.get('ONCALL_WEEK', 3) # TODO probs can change this to an env var
 FRIDAY = 4
 
 slack_client = SlackClient(SLACK_BOT_TOKEN)
@@ -14,21 +14,10 @@ db = DB()
 app = Flask(__name__)
 
 def post_to_slack(channelMsgText):
-  slack_client.api_call("chat.postMessage",
-                        channel=SLACK_CHANNEL,
-                        text=channelMsgText)
-
-# def get_oncall_rota():
-#   res = {}
-#   rec = db.fetch_all_data()
-#   rec = sorted(rec, key=lambda  k: k['order'])
-#   for idx, r in enumerate(rec):
-#       if r['is_on_call'] == 1:
-#           res['current'] = r
-#           res['previous'] = rec[idx-1] if idx > 0 else rec[-1]
-#           res['next'] = rec[idx+1] if idx < len(rec) - 1 else rec[0]
-#           break
-#   return res
+  res = slack_client.api_call("chat.postMessage",
+                              channel=SLACK_CHANNEL,
+                              text=channelMsgText)
+  print(res)
 
 def get_all_oncall_person():
   res = []
@@ -89,13 +78,6 @@ def update_oncall_status(new_status):
 #     return False
 #   return db.update_data('name', curr_oncall, {'is_on_call': 0})
 
-# def refresh_oncall_rota():
-#   curr_oncall = get_current_oncall()
-#   next_oncall = get_next_oncall()
-#   db.update_data('name', curr_oncall, {'is_on_call': 0})
-#   db.update_data('name', next_oncall, {'is_on_call': 1})
-#   return next_oncall
-
 def is_oncall_week():
   today = date.today()
   day = today.weekday()
@@ -122,38 +104,41 @@ def check_oncall_schedule():
   curr_oncall = get_current_oncall()
   return curr_oncall
 
-  # if diff_in_weeks == 0:
-  #   return
-  # is_oncall_week = get_oncall_status()
-  # if (not is_oncall_week) and (diff_in_weeks >= ONCALL_WEEK):
-  #   update_last_oncall_date(today)
-  #   update_oncall_status(1)
-  #   curr_oncall = refresh_oncall_rota()
-  #   post_to_slack("Hello! {} is OnCall today.".format(curr_oncall))
-  # elif is_oncall_week and (diff_in_weeks < ONCALL_WEEK):
-  #   update_oncall_status(0)
+def check_next_oncall_date():
+  if get_oncall_status():
+    return ONCALL_WEEK
+  else:
+    today = date.today()
+    last_oncall_date = get_last_oncall_date()
+    diff_in_weeks = (today - last_oncall_date).days//7
+    return ONCALL_WEEK - diff_in_weeks
 
 def handle_event(type, text):
   if not type == "app_mention":
     return
-  channelMsgText = "Sorry, I did not understand that."
+  channelMsgText = "Apologies, I did not quite catch that. Could you try again?"
   text_in_lowercase = text.lower()
-  if "when are we oncall" in text_in_lowercase:
-    pass
+  if "when are we next oncall" in text_in_lowercase:
+    channelMsgText = "My calendar says that the next OnCall week is in {} week(s).".format(check_next_oncall_date())
   elif "who is on the rota" in text_in_lowercase:
-    channelMsgText = get_all_oncall_person()
+    res = get_all_oncall_person()
+    channelMsgText = "Masters {} are currently on the rota.".format(res) if res else "I'm afraid that there isn't anyone on the rota at the moment."
   elif "who is currently oncall" in text_in_lowercase:
-    channelMsgText = get_current_oncall() or "No one."
+    res = get_current_oncall()
+    channelMsgText = "Master {} is currently OnCall.".format(res) if res else "I'm afraid that there isn't anyone currently OnCall."
   elif "who is next oncall" in text_in_lowercase:
-    channelMsgText = get_next_oncall() or "No one."
+    res = get_next_oncall()
+    channelMsgText = "Master {} is next OnCall".format(res) if res else "I'm afraid that there isn't anyone next OnCall."
   elif "who was previously oncall" in text_in_lowercase:
-    channelMsgText = get_previous_oncall() or "No one."
+    res = get_previous_oncall()
+    channelMsgText = "Master {} was previously OnCall".format(res) if res else "I'm afraid that there wasn't anyone previously OnCall."
   # elif "change current oncall to" in text_in_lowercase:
   #   name = get_new_oncall_person_name(text)
   #   if manually_update_oncall_person(name):
   #     channelMsgText = "{} is now OnCall!".format(name)
   #   else:
   #     channelMsgText = "Sorry, I'm unable to change the current OnCall person to {}.".format(name)
+  print(channelMsgText)
   post_to_slack(channelMsgText)
 
 @app.route("/slack", methods=["POST"])
@@ -175,7 +160,7 @@ def worker():
   while True:
     tmp = check_oncall_schedule()
     if tmp != res:
-      post_to_slack("Hello! {} is OnCall today.".format(tmp))
+      post_to_slack("Greetings, Master {} will be OnCall today.".format(tmp))
       res = tmp
     time.sleep(3600)
 
@@ -183,7 +168,6 @@ def init():
   thread = threading.Thread(target=worker, args=())
   thread.daemon = True
   thread.start()
-  app.debug = False
   return app
 
 if __name__ == "__main__":
