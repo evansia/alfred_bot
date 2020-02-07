@@ -120,7 +120,6 @@ def check_oncall_schedule():
   if not is_oncall_week():
     return
   curr_oncall = get_current_oncall()
-  print(curr_oncall)
   return curr_oncall
 
   # if diff_in_weeks == 0:
@@ -184,6 +183,7 @@ def init():
   thread = threading.Thread(target=worker, args=())
   thread.daemon = True
   thread.start()
+  app.debug = False
   return app
 
 if __name__ == "__main__":
