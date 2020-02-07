@@ -115,7 +115,7 @@ def is_oncall_week():
 
 def check_oncall_schedule():
   if not is_oncall_week():
-    return
+    return None
   curr_oncall = get_current_oncall()
   return curr_oncall
 
@@ -173,7 +173,7 @@ def worker():
   while True:
     prev = get_current_oncall_person()
     curr = check_oncall_schedule()
-    if curr != prev:
+    if (curr is not None) and curr != prev:
       post_to_slack("Greetings, Master {} will be OnCall today.".format(curr))
       update_current_oncall_person(curr)
     time.sleep(3600)
