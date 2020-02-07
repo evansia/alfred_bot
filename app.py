@@ -30,8 +30,7 @@ def get_oncall_based_on_day(day):
   if day > FRIDAY or day < 0 or not get_oncall_status():
     return None
   elif day == FRIDAY:
-    previously = db.fetch_metadata("name", "last_oncall_person")[0]["value"]
-    day = previously + 1
+    day = get_wildcard_oncall()
   rec = db.fetch_data("order", day % len(db.fetch_all_data()))
   return rec[0]
 
@@ -50,6 +49,11 @@ def get_previous_oncall():
   rec = get_oncall_based_on_day(day)
   return rec["name"] if rec else None
 
+def get_wildcard_oncall():
+  previously = db.fetch_metadata("name", "last_oncall_person")[0]["value"]
+  newly = previously + 1
+  return newly
+
 def get_last_oncall_date():
   rec = db.fetch_metadata('name', 'last_oncall_date')
   return datetime.strptime(rec[0]['value'], '%Y/%m/%d').date() if rec else None
@@ -58,11 +62,21 @@ def get_oncall_status():
   rec = db.fetch_metadata('name', 'is_oncall_week')
   return rec[0]['value'] if rec else None
 
+def get_current_oncall_person():
+  rec = db.fetch_metadata('name', 'curr_oncall_person')
+  return rec[0]['value'] if rec else None
+
 def update_last_oncall_date(new_date):
   return db.update_metadata('name', 'last_oncall_date', {'value': new_date.strftime("%Y/%m/%d")})
 
 def update_oncall_status(new_status):
   return db.update_metadata('name', 'is_oncall_week', {'value': new_status})
+
+def update_last_oncall_person():
+  return db.update_metadata("name", "last_oncall_person", {"value": get_wildcard_oncall() % len(db.fetch_all_data())})
+
+def update_current_oncall_person(person):
+  return db.update_metadata("name", "curr_oncall_person", {"value": person})
 
 # def get_new_oncall_person_name(raw_text):
 #   """
@@ -91,6 +105,7 @@ def is_oncall_week():
     return True
   elif diff_in_weeks == 1:
     update_oncall_status(0)
+    update_last_oncall_person()
     return False
   elif diff_in_weeks == ONCALL_WEEK:
     update_last_oncall_date(today)
@@ -138,7 +153,6 @@ def handle_event(type, text):
   #     channelMsgText = "{} is now OnCall!".format(name)
   #   else:
   #     channelMsgText = "Sorry, I'm unable to change the current OnCall person to {}.".format(name)
-  print(channelMsgText)
   post_to_slack(channelMsgText)
 
 @app.route("/slack", methods=["POST"])
@@ -156,12 +170,12 @@ def index():
   return ""
 
 def worker():
-  res = None
   while True:
-    tmp = check_oncall_schedule()
-    if tmp != res:
-      post_to_slack("Greetings, Master {} will be OnCall today.".format(tmp))
-      res = tmp
+    prev = get_current_oncall_person()
+    curr = check_oncall_schedule()
+    if curr != prev:
+      post_to_slack("Greetings, Master {} will be OnCall today.".format(curr))
+      update_current_oncall_person(curr)
     time.sleep(3600)
 
 def init():
