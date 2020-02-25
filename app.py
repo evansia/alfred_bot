@@ -17,7 +17,6 @@ def post_to_slack(channelMsgText):
   res = slack_client.api_call("chat.postMessage",
                               channel=SLACK_CHANNEL,
                               text=channelMsgText)
-  print(res)
 
 def get_all_oncall_person():
   res = []
@@ -116,6 +115,7 @@ def is_oncall_week():
 
 def check_oncall_schedule():
   if not is_oncall_week():
+    print("!!!! IS NOT ONCALL WEEK")
     return None
   curr_oncall = get_current_oncall()
   return curr_oncall
@@ -134,20 +134,20 @@ def handle_event(type, text):
     return
   channelMsgText = "Apologies, I did not quite catch that. Could you try again?"
   text_in_lowercase = text.lower()
-  if "when are we next oncall" in text_in_lowercase:
-    channelMsgText = "My calendar says that the next OnCall week is in {} week(s).".format(check_next_oncall_date())
+  if "when are we next on support" in text_in_lowercase:
+    channelMsgText = "My calendar says that the next support week is in {} week(s).".format(check_next_oncall_date())
   elif "who is on the rota" in text_in_lowercase:
     res = get_all_oncall_person()
     channelMsgText = "Masters {} are currently on the rota.".format(res) if res else "I'm afraid that there isn't anyone on the rota at the moment."
-  elif "who is currently oncall" in text_in_lowercase:
+  elif "who is currently on support" in text_in_lowercase:
     res = get_current_oncall()
-    channelMsgText = "Master {} is currently OnCall.".format(res) if res else "I'm afraid that there isn't anyone currently OnCall."
-  elif "who is next oncall" in text_in_lowercase:
+    channelMsgText = "Master {} is currently on support.".format(res) if res else "I'm afraid that there isn't anyone currently on support."
+  elif "who is next on support" in text_in_lowercase:
     res = get_next_oncall()
-    channelMsgText = "Master {} is next OnCall".format(res) if res else "I'm afraid that there isn't anyone next OnCall."
-  elif "who was previously oncall" in text_in_lowercase:
+    channelMsgText = "Master {} is next on on support".format(res) if res else "I'm afraid that there isn't anyone next on support."
+  elif "who was previously on support" in text_in_lowercase:
     res = get_previous_oncall()
-    channelMsgText = "Master {} was previously OnCall".format(res) if res else "I'm afraid that there wasn't anyone previously OnCall."
+    channelMsgText = "Master {} was previously on support".format(res) if res else "I'm afraid that there wasn't anyone previously on support."
   # elif "change current oncall to" in text_in_lowercase:
   #   name = get_new_oncall_person_name(text)
   #   if manually_update_oncall_person(name):
@@ -174,8 +174,9 @@ def worker():
   while True:
     prev = get_current_oncall_person()
     curr = check_oncall_schedule()
+    print("!!!! P:{} vs. C:{}".format(prev, curr))
     if (curr is not None) and curr != prev:
-      post_to_slack("Greetings, Master {} will be OnCall today.".format(curr))
+      post_to_slack("Greetings, Master {} will be on support today.".format(curr))
       update_current_oncall_person(curr)
     time.sleep(3600)
 
